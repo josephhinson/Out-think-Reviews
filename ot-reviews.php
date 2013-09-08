@@ -47,12 +47,14 @@ add_action( 'init', 'ot_reviews_plugin_updater_init' );
 function ot_reviews_plugin_updater_init() {
 	/* Load Plugin Updater */
 	require_once( trailingslashit( plugin_dir_path( __FILE__ ) ) . 'includes/plugin-updater.php' );
-
+	$userinfo = get_option('ot-plugin-validation');
+	
 	/* Updater Config */
 	$config = array(
 		'base'      => plugin_basename( __FILE__ ), //required
-		'username'    => true, // user login name in your site.
-		'dashboard'   => true,
+		'username'    => $userinfo['user'], // user login name in your site.
+		'key' => $userinfo['email'],
+
 		'repo_uri'  => 'http://outthinkgroup.com/',
 		'repo_slug' => 'outthink-reviews',
 	);
@@ -209,6 +211,18 @@ function ot_reviews_init_widget() {
 	register_widget( 'OT_Reviews_Widget' );
 } 
 
+// Change the default "Title" to be "Enter Reviewer Name"
+function ot_change_reviews_title( $title ){
+     $screen = get_current_screen();
+ 
+     if  ( 'reviews' == $screen->post_type ) {
+          $title = 'Enter Reviewer Name';
+     }
+ 
+     return $title;
+}
+add_filter( 'enter_title_here', 'ot_change_reviews_title' );
+
 
 // new class to extend WP_Widget function
 class OT_Reviews_Widget extends WP_Widget {
@@ -329,16 +343,4 @@ class OT_Reviews_Widget extends WP_Widget {
 	}
 }
 
-// Change the default "Title" to be "Enter Reviewer Name"
-function ot_change_reviews_title( $title ){
-     $screen = get_current_screen();
- 
-     if  ( 'reviews' == $screen->post_type ) {
-          $title = 'Enter Reviewer Name';
-     }
- 
-     return $title;
-}
- 
-add_filter( 'enter_title_here', 'ot_change_reviews_title' );
-?>
+require_once( trailingslashit( plugin_dir_path( __FILE__ ) ) . 'includes/options.php' );
