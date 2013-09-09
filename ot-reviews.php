@@ -34,9 +34,12 @@ add_action( 'init', 'register_review_init' );
 add_action('init', 'ot_reviews_enqueue');
 function ot_reviews_enqueue() {
 	$file_dir = get_bloginfo('template_directory');
+	$settings = (array)get_option('otr-settings');
 	wp_enqueue_script( 'jquery-cycle', plugins_url( 'js/jquery.cycle.all.min.js', __FILE__ ), array('jquery') );
     wp_enqueue_script('jquery');
-	wp_enqueue_style( 'ot_reviews_styles', plugins_url('/css/otr-styles.css', __FILE__));
+	if ($settings[styles] != true) {
+		wp_enqueue_style( 'ot_reviews_styles', plugins_url('/css/otr-styles.css', __FILE__));
+	}
 }
 
 add_action( 'init', 'ot_reviews_plugin_updater_init' );

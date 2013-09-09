@@ -15,6 +15,7 @@ class OT_Reviews_Settings{
 		$userinfo = (array)get_option('ot-plugin-validation');
 
 		register_setting( 'otr-settings-group', 'ot-plugin-validation' );
+		register_setting( 'otr-settings-group', 'otr-settings');
 
 	    add_settings_section( 'section-one', 'Registration Info', array($this, 'section_one_callback'), 'ot_reviews' );
 		// adding the Username Field
@@ -25,6 +26,15 @@ class OT_Reviews_Settings{
 		add_settings_field( 'email', 'Email', array($this, 'text_input'), 'ot_reviews', 'section-one', array(
 		    'name' => 'ot-plugin-validation[email]',
 		    'value' => $userinfo['email'],
+		) );
+		// Section two - THIS plugin specific settings
+		add_settings_section( 'section-two', 'Reviews Options', array($this, 'section_one_callback'), 'ot_reviews' );
+		$otr_settings = (array)get_option('otr-settings');
+		add_settings_field( 'render_styles', 'Disable Plugin Styles', array($this, 'checkbox'), 'ot_reviews', 'section-two', array(
+		    'name' => 'otr-settings[styles]',
+		    'value' => true,
+			'check' => $otr_settings['styles'],
+			'help' => ' <small>In order to use your own styles, check this option and target the Reviews plugin classes in your stylesheet</small>'
 		) );
 	
 	}
@@ -37,6 +47,14 @@ class OT_Reviews_Settings{
 	    $name = esc_attr( $args['name'] );
 	    $value = esc_attr( $args['value'] );
 	    echo "<input type='text' name='$name' value='$value' />";
+		echo $args['help'];
+	}
+	function checkbox( $args ) {
+	    $name = esc_attr( $args['name'] ); // name of field
+	    $value = esc_attr( $args['value'] ); // value of field
+		$check = esc_attr($args['check']); // value to check against for checkbox functionality
+		if($check == $value) $checked = ' checked="checked"';
+	    echo "<input type='checkbox' name='$name' value='$value' $checked />";
 		echo $args['help'];
 	}
 
