@@ -81,7 +81,7 @@ function ot_reviews_func($atts) {
 		);
 		$c=0;
 		$quotes = get_posts($quotestxt);
-		$return='';
+		$return='<div id="reviews">';
 		foreach($quotes as $quote) {
 			$return.= '<p class="quote num-'.$c.'">';
 			$return.= '<span class="otr_leftquo">&ldquo;</span>' . trim($quote->post_content). '<span class="otr_rightquo">&rdquo;</span> <span class="source">';
@@ -91,7 +91,8 @@ function ot_reviews_func($atts) {
 			$return .= '&ndash;'.$quote->post_title.'</span>';
 			$return .= '</p>';
 			$c++;
-		} // endfor 				
+		} // endfor
+		$return .= '</div>';
 		return $return;
 }
 add_shortcode("reviews", "ot_reviews_func");
@@ -102,7 +103,7 @@ function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '',
 	<?php if ($timeout > 0): ?>
 		<script type="text/javascript" charset="utf-8">
 			jQuery(document).ready(function() {
-				jQuery('#reviews').cycle({
+				jQuery('.otreviews_widget #reviews').cycle({
 					fx: 'fade', // choose your transition type, ex: fade, scrollUp, shuffle, etc...
 					containerResize: 1,
 					fit: 1,
@@ -344,3 +345,4 @@ class OT_Reviews_Widget extends WP_Widget {
 
 require_once( trailingslashit( plugin_dir_path( __FILE__ ) ) . 'includes/options.php' );
 include	'tinymce/ot-reviews-tinymce.php';
+include 'includes/ot-nlsignup.php';
