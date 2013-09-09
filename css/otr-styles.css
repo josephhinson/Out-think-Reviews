@@ -1,0 +1,8 @@
+#reviews .quote {
+	font-size: 120%;
+}
+#reviews .quote .source {
+font-weight: bold;
+font-size: 90%;
+display: block;
+}

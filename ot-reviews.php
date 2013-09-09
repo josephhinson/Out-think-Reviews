@@ -31,12 +31,12 @@ add_action('widgets_init', 'ot_reviews_init_widget');
 add_action( 'init', 'register_review_init' );
 
 //calling jQuery if it's not already enqueue
-add_action('init', 'ot_reviews_scripts');
-function ot_reviews_scripts() {
+add_action('init', 'ot_reviews_enqueue');
+function ot_reviews_enqueue() {
 	$file_dir = get_bloginfo('template_directory');
-	wp_enqueue_script( 'jquery-cycle', plugins_url().
-		'/functions/js/jquery.cycle.all.min.js', array('jquery') );
+	wp_enqueue_script( 'jquery-cycle', plugins_url( 'js/jquery.cycle.all.min.js', __FILE__ ), array('jquery') );
     wp_enqueue_script('jquery');
+	wp_enqueue_style( 'ot_reviews_styles', plugins_url('/css/otr-styles.css', __FILE__));
 }
 
 add_action( 'init', 'ot_reviews_plugin_updater_init' );
@@ -146,8 +146,8 @@ function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '',
 			// if there is a limit, make sure that the string length of the "content" is less than the limit, if it is, allow the variable to continue.
 			if ($limit > 0 && str_word_count($thiscontent) < $limit):
 				$thiscontent = $thiscontent;
-			else :
-//				$thiscontent = '';
+			elseif ($limit > 0 && str_word_count($thiscontent) > $limit) :
+				$thiscontent = '';
 			endif; ?>
 			<?php if (strlen($thiscontent) > 0): ?>
 				<p class="quote"<?php if ($c > 0): ?> style="display:none;"<?php endif; ?>>
@@ -293,8 +293,7 @@ class OT_Reviews_Widget extends WP_Widget {
 */
 	function form( $instance ) {
 
-		// Set up some default widget settings.
-		
+		// Set up some default widget settings.		
 		$defaults = array(
 			'title' => __('', 'ot_reviews'),
 			'reviews_timeout' => '12',
@@ -344,3 +343,4 @@ class OT_Reviews_Widget extends WP_Widget {
 }
 
 require_once( trailingslashit( plugin_dir_path( __FILE__ ) ) . 'includes/options.php' );
+include	'tinymce/ot-reviews-tinymce.php';
