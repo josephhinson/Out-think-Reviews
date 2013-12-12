@@ -33,6 +33,7 @@ add_action( 'init', 'register_review_init' );
 //calling jQuery if it's not already enqueue
 add_action('init', 'ot_reviews_enqueue');
 function ot_reviews_enqueue() {
+	add_image_size('review-thumb', 70, 70, true);
 	$file_dir = get_bloginfo('template_directory');
 	$settings = (array)get_option('otr-settings');
 	wp_enqueue_script( 'jquery-cycle', plugins_url( 'js/jquery.cycle.all.min.js', __FILE__ ), array('jquery') );
@@ -41,6 +42,7 @@ function ot_reviews_enqueue() {
 		wp_enqueue_style( 'ot_reviews_styles', plugins_url('/css/otr-styles.css', __FILE__));
 	}
 }
+
 
 add_action( 'init', 'ot_reviews_plugin_updater_init' );
 
@@ -106,7 +108,7 @@ function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '',
 	<?php if ($timeout > 0): ?>
 		<script type="text/javascript" charset="utf-8">
 			jQuery(document).ready(function() {
-				jQuery('.otreviews_widget #reviews').cycle({
+				jQuery('#reviews').cycle({
 					fx: 'fade', // choose your transition type, ex: fade, scrollUp, shuffle, etc...
 					containerResize: 1,
 					fit: 1,
