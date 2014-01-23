@@ -69,12 +69,13 @@ function ot_reviews_plugin_updater_init() {
 }
 
 // This is the shortcode for the reviews takes paramters 'source' and 'number' 
-// [reviews source='higher-ed' number='10']
+// [reviews source='higher-ed' number='10' fade="true"]
 function ot_reviews_func($atts) {
         extract(shortcode_atts(array(
 			"source" => "",
 			"orderby" => "menu_order",
-			"number" => "-1"
+			"number" => "-1",
+			"fade" => ""
         ), $atts));
 		$quotestxt = array(
 			"numberposts" => $number,
@@ -85,8 +86,11 @@ function ot_reviews_func($atts) {
 			"sources" => $source
 		);
 		$c=0;
+		if (strlen($fade) > 0) {
+			$class = ' class="cycle"';
+		}
 		$quotes = get_posts($quotestxt);
-		$return='<div id="reviews">';
+		$return='<div id="reviews"'.$class.'>';
 		foreach($quotes as $quote) {
 			$return.= '<p class="quote num-'.$c.'">';
 			$return.= '<span class="otr_leftquo">&ldquo;</span>' . trim($quote->post_content). '<span class="otr_rightquo">&rdquo;</span> <span class="source">';
@@ -104,11 +108,11 @@ add_shortcode("reviews", "ot_reviews_func");
 // end shortcode
 
 // fading reviews function
-function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '', $limit = 0, $type = 'content') { ?>
+function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '', $limit = 0, $type = 'content', $linktype = 'none', $linkurl = '') { ?>
 	<?php if ($timeout > 0): ?>
 		<script type="text/javascript" charset="utf-8">
 			jQuery(document).ready(function() {
-				jQuery('#reviews').cycle({
+				jQuery('.widget #reviews, .cycle').cycle({
 					fx: 'fade', // choose your transition type, ex: fade, scrollUp, shuffle, etc...
 					containerResize: 1,
 					fit: 1,
@@ -145,9 +149,18 @@ function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '',
 			if ($type == 'excerpt') {
 				if (strlen($quote->post_excerpt) > 0) {
 					$thiscontent = $quote->post_excerpt;
+				} else {
+					$thiscontent = $quote->post_content;
 				}
 			} else {
 				$thiscontent = $quote->post_content;
+			}
+			if ($linktype == 'none') {
+				$more_link = '';
+			} elseif ($linktype == 'single') {
+				$more_link = '<a href="'.get_permalink($quote->ID).'">Read More...</a>';
+			} elseif ($linktype = 'custom' and $linkurl != '') {
+				$more_link = '<a href="'.$linkurl.'">Read More...</a>';
 			}
 			// if there is a limit, make sure that the string length of the "content" is less than the limit, if it is, allow the variable to continue.
 			if ($limit > 0 && str_word_count($thiscontent) < $limit):
@@ -157,17 +170,19 @@ function ot_reviews($timeout = 6, $number = -1, $orderby = 'rand', $source = '',
 			endif; ?>
 			<?php if (strlen($thiscontent) > 0): ?>
 				<p class="quote"<?php if ($c > 0): ?> style="display:none;"<?php endif; ?>>
-					<span class="otr_leftquo">&ldquo;</span><?php echo trim($thiscontent); ?><span class="otr_rightquo">&rdquo;</span>
+					<span class="otr_leftquo">&ldquo;</span><?php echo trim($thiscontent); ?><span class="otr_rightquo">&rdquo;</span> <?php echo trim($more_link); ?>
 					<span class="source"><?php
 						if (has_post_thumbnail($quote->ID)) {
 							echo get_the_post_thumbnail($quote->ID, 'review-thumb', array('class' => 'q-thumb'));
 						}
 						?>&ndash;<?php echo $quote->post_title; ?></span>
 				</p>
-				
+			<?php $c++; ?>
 			<?php endif; ?>
-			<?php $thiscontent = ''; ?>
-			<?php $c++;
+			<?php $thiscontent = '';
+			$more_link = '';
+			?>
+			<?php
 		} // endfor ?>
 	</div><!--END reviews-->
 <?php } // END reviews function
@@ -232,7 +247,7 @@ add_filter( 'enter_title_here', 'ot_change_reviews_title' );
 
 // new class to extend WP_Widget function
 class OT_Reviews_Widget extends WP_Widget {
-	/** Widget setup.  */
+	/** Widget setup. */
 	function OT_Reviews_Widget() {
 		/* Widget settings. */
 		$widget_ops = array(
@@ -260,9 +275,13 @@ class OT_Reviews_Widget extends WP_Widget {
 		$source = $instance['reviews_source'];
 		$strlen = $instance['reviews_strlen'];
 		$rcontent = $instance['reviews_content'];
+		$linktype = $instance['reviews_linktype'];
+		$linkURL = $instance['reviews_customURL'];
 
 		/* Before widget (defined by themes). */
+//		print_r($instance);
 		echo $before_widget;
+		
 
 		/* Display title from widget settings if one was input. */
 
@@ -271,7 +290,7 @@ class OT_Reviews_Widget extends WP_Widget {
 		
 		// Settings from the widget
 
-		ot_reviews($timeout, $number, $orderby, $source, $strlen, $rcontent );
+		ot_reviews($timeout, $number, $orderby, $source, $strlen, $rcontent, $linktype, $linkURL );
 		/* After widget (defined by themes). */
 		echo $after_widget;
 	}
@@ -289,6 +308,8 @@ class OT_Reviews_Widget extends WP_Widget {
       $instance['reviews_orderby'] = $new_instance['reviews_orderby'];
       $instance['reviews_strlen'] = strip_tags(stripslashes($new_instance['reviews_strlen']));
       $instance['reviews_content'] = $new_instance['reviews_content'];
+      $instance['reviews_linktype'] = $new_instance['reviews_linktype'];
+	  $instance['reviews_customURL'] = $new_instance['reviews_customURL'];
     return $instance;
   }
 
@@ -307,15 +328,17 @@ class OT_Reviews_Widget extends WP_Widget {
 			'reviews_orderby' => 'rand',
 			'reviews_source' => '',
 			'reviews_strlen' => '',
-			'reviews_content' => 'content'
+			'reviews_content' => 'content',
+			'reviews_linktype' => 'none',
+			'reviews_customURL' => ''
 		);
+		
 		$instance = wp_parse_args( (array) $instance, $defaults ); ?>
-
 		<!-- Widget Title: Text Input -->
 		<p>
-		<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e('Title:', 'ot_reviews'); ?></label><br>
-		<input type="text" class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>">
-	</p>
+			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e('Title:', 'ot_reviews'); ?></label><br>
+			<input type="text" class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>">
+		</p>
 		<p>
 			<label for="<?php echo $this->get_field_id( 'reviews_timeout' ); ?>">Seconds between reviews <small>0 for no transition</small></label><br><input type="text" name="<?php echo $this->get_field_name( 'reviews_timeout' ); ?>" value="<?php echo $instance['reviews_timeout']; ?>" id="<?php echo $this->get_field_id( 'reviews_timeout' ); ?>">				
 		</p>
@@ -324,19 +347,29 @@ class OT_Reviews_Widget extends WP_Widget {
 		</p>
 		<p>
 			<label for="<?php echo $this->get_field_id( 'reviews_source'); ?>">Source of Review <small>(slug of source, ex: reader-review)</small></label><br><input type="text" name="<?php echo $this->get_field_name( 'reviews_source'); ?>" value="<?php echo $instance['reviews_source']; ?>" id="<?php echo $this->get_field_id( 'reviews_source'); ?>">
-			
 		</p>
 		<p>
-			<label for="<?php echo $this->get_field_id( 'reviews_strlen'); ?>">Limit by String Length <small>(ex: 250 for short reviews)</small></label><br><input type="text" name="<?php echo $this->get_field_name( 'reviews_strlen'); ?>" value="<?php echo $instance['reviews_strlen']; ?>" id="<?php echo $this->get_field_id( 'reviews_strlen'); ?>">
+			<label for="<?php echo $this->get_field_id( 'reviews_strlen'); ?>">Limit by Word Length <small>(ex: 50 for short reviews)</small></label><br><input type="text" name="<?php echo $this->get_field_name( 'reviews_strlen'); ?>" value="<?php echo $instance['reviews_strlen']; ?>" id="<?php echo $this->get_field_id( 'reviews_strlen'); ?>">
 		</p>
-		<p><label for="<?php echo $this->get_field_id( 'reviews_content' ); ?>">What content area do you want to display in this widget?</label><br>
+		<p>
+			<label for="<?php echo $this->get_field_id( 'reviews_content' ); ?>">What content area do you want to display in this widget?</label><br>
 			<select name="<?php echo $this->get_field_name( 'reviews_content'); ?>" id="<?php echo $this->get_field_id( 'reviews_content'); ?>">
 				<option <?php if ( 'content' == $instance['reviews_content'] ) echo 'selected="selected"'; ?> value="content">Content</option>
 				<option <?php if ( 'excerpt' == $instance['reviews_content'] ) echo 'selected="selected"'; ?> value="excerpt">Excerpt</option>
 			</select>
 		</p>
-
-		<p><label for="<?php echo $this->get_field_id( 'reviews_orderby' ); ?>">In which order do you want the reviews to display?</label><br>
+		<p style="background: #fff;border: 1px solid #ddd;padding: 10px;">
+			<label for="<?php echo $this->get_field_id( 'reviews_linktype' ); ?>">Where would you like the "Read More" to link?</label><br>
+			<select name="<?php echo $this->get_field_name( 'reviews_linktype'); ?>" id="<?php echo $this->get_field_id( 'reviews_linktype'); ?>">
+				<option <?php if ( 'none' == $instance['reviews_linktype'] ) echo 'selected="selected"'; ?> value="none">Do not use Read More Link</option>
+				<option <?php if ( 'single' == $instance['reviews_linktype'] ) echo 'selected="selected"'; ?> value="single">Single Review Page</option>
+				<option <?php if ( 'custom' == $instance['reviews_linktype'] ) echo 'selected="selected"'; ?> value="custom">Custom URL</option>				
+			</select><br>
+			<label for="<?php echo $this->get_field_id( 'reviews_customURL'); ?>">Custom URL <small>(will only be used if option above is "Custom URL")</small></label><br>
+			<input type="text" name="<?php echo $this->get_field_name( 'reviews_customURL'); ?>" value="<?php echo $instance['reviews_customURL']; ?>" id="<?php echo $this->get_field_id( 'reviews_customURL'); ?>">
+		</p>
+		<p>
+			<label for="<?php echo $this->get_field_id( 'reviews_orderby' ); ?>">In which order do you want the reviews to display?</label><br>
 			<select name="<?php echo $this->get_field_name( 'reviews_orderby'); ?>" id="<?php echo $this->get_field_id( 'reviews_orderby'); ?>">
 				<option <?php if ( 'menu_order' == $instance['reviews_orderby'] ) echo 'selected="selected"'; ?> value="menu_order">Menu Order</option>
 				<option <?php if ( 'rand' == $instance['reviews_orderby'] ) echo 'selected="selected"'; ?> value="rand">Random</option>
